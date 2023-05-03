@@ -1,4 +1,5 @@
 import {Router} from "express";
+import {CreateUserDTO, UserDTO} from "./dto";
 
 class UserController {
     router;
@@ -6,7 +7,8 @@ class UserController {
     users = [
         {
             id: 1,
-            name: 'EunHo',
+            firstName: 'EunHo',
+            lastName: 'Moon',
             age: 32
         }
     ];
@@ -26,7 +28,9 @@ class UserController {
 
     getUsers(req, res, next) {
         try {
-            res.status(200).json({users: this.users});
+            const users = this.users.map(user => new UserDTO(user));
+
+            res.status(200).json({users: users});
         } catch (err) {
             next(err);
         }
@@ -35,13 +39,13 @@ class UserController {
     getUser(req, res, next) {
         try {
             const {id} = req.params;
-            console.log(id);
-            console.log(typeof id);
-            const user = this.users.find(user => user.id === Number(id));
+            const targetUser = this.users.find(user => user.id === Number(id));
 
-            if (!user) {
+            if (!targetUser) {
                 throw {status: 404, message: '사용자를 찾을 수 없습니다.'};
             }
+
+            const user = new UserDTO(targetUser);
 
             res.status(200).json({user});
         } catch (err) {
@@ -51,13 +55,15 @@ class UserController {
 
     createUser(req, res, next) {
         try {
-            const {name, age} = req.body;
+            const {firstName, lastName, age} = req.body;
 
-            this.users.push({
-                id: new Date().getTime(),
-                name: name,
-                age: age
-            });
+            if (!firstName || !lastName) {
+                throw { state: 400, message: '이름이 없습니다.' }
+            }
+
+            const newUser = new CreateUserDTO(firstName, lastName, age).getUser();
+
+            this.users.push(newUser);
 
             res.status(201).json({users: this.users});
         } catch (err) {
@@ -68,13 +74,18 @@ class UserController {
     updateUser(req, res, next) {
         try {
             const {id} = req.params;
-            const {name, age} = req.body;
+            const {firstName, lastName, age} = req.body;
+
+            if (!firstName || !lastName) {
+                throw { state: 400, message: '이름이 없습니다.' }
+            }
 
             const targetUserIdx = this.users.findIndex(user => user.id === Number(id));
 
             this.users[targetUserIdx] = {
                 id: this.users[targetUserIdx].id,
-                name: name ?? this.users[targetUserIdx].name,
+                firstName: firstName ?? this.users[targetUserIdx].firstName,
+                lastName: lastName ?? this.users[targetUserIdx].lastName,
                 age: age ?? this.users[targetUserIdx].age
             };
 
