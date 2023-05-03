@@ -24,48 +24,75 @@ class UserController {
         this.router.delete('/:id', this.deleteUser.bind(this));
     }
 
-    getUsers(req, res) {
-        res.status(200).json({users: this.users});
+    getUsers(req, res, next) {
+        try {
+            res.status(200).json({users: this.users});
+        } catch (err) {
+            next(err);
+        }
     }
 
-    getUser(req, res) {
-        const {id} = req.params;
-        const user = users.find(user => user.id === Number(id));
+    getUser(req, res, next) {
+        try {
+            const {id} = req.params;
+            console.log(id);
+            console.log(typeof id);
+            const user = this.users.find(user => user.id === Number(id));
 
-        res.status(200).json({user});
+            if (!user) {
+                throw {status: 404, message: '사용자를 찾을 수 없습니다.'};
+            }
+
+            res.status(200).json({user});
+        } catch (err) {
+            next(err);
+        }
     }
 
-    createUser(req, res) {
-        const {name, age} = req.body;
+    createUser(req, res, next) {
+        try {
+            const {name, age} = req.body;
 
-        this.users.push({
-            id: new Date().getTime(),
-            name: name,
-            age: age
-        });
-        res.status(201).json({users: this.users});
+            this.users.push({
+                id: new Date().getTime(),
+                name: name,
+                age: age
+            });
+
+            res.status(201).json({users: this.users});
+        } catch (err) {
+            next(err);
+        }
     }
 
-    updateUser(req, res) {
-        const {id} = req.params;
-        const {name, age} = req.body;
+    updateUser(req, res, next) {
+        try {
+            const {id} = req.params;
+            const {name, age} = req.body;
 
-        const targetUserIdx = this.users.findIndex(user => user.id === Number(id));
+            const targetUserIdx = this.users.findIndex(user => user.id === Number(id));
 
-        this.users[targetUserIdx] = {
-            id: this.users[targetUserIdx].id,
-            name: name ?? this.users[targetUserIdx].name,
-            age: age ?? this.users[targetUserIdx].age
-        };
+            this.users[targetUserIdx] = {
+                id: this.users[targetUserIdx].id,
+                name: name ?? this.users[targetUserIdx].name,
+                age: age ?? this.users[targetUserIdx].age
+            };
 
-        res.status(204).json({});
+            res.status(204).json({});
+        } catch (err) {
+            next(err);
+        }
     }
 
     deleteUser(req, res) {
-        const {id} = req.params;
-        this.users = this.users.filter(user => user.id !== Number(id));
+        try {
+            const {id} = req.params;
+            this.users = this.users.filter(user => user.id !== Number(id));
 
-        res.status(204).json({});
+            res.status(204).json({});
+        } catch (err) {
+            next(err);
+        }
     }
 }
 
